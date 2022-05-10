@@ -1,0 +1,45 @@
+version: "2.3"
+
+services:
+  style_transfer:
+    container_name: philipp_gpu0_reconet3
+    image: utileetdulce/reconet:empty-samurai
+    build: .
+    volumes:
+      - .:/root/workspace
+      - /mnt/big/dataset/flyingthings3d_monkaa/:/mnt/datasets
+    runtime: nvidia
+    # command: "python style_video.py --batch-size 1 'input/test_1920x1080_600frames.mp4' 'output/test_1920x1080_mosaic.mp4' 'models/model_mosaic_2.pth'"
+    # command: "python style_video.py --batch-size 1 'input/test_540x960_600frames.mp4' 'output/test_540x960_mosaic.mp4' 'models/model_mosaic_2.pth'"
+    # command: "python style_video.py --batch-size 1 'input/test_540x960_600frames.mp4' 'output/test_540x960_five_horses.mp4' 'models/five_horses.pth'"
+    # command: "python style_video.py --batch-size 1 'input/test_640x380.mov' 'output/test_640x380.mov_five_horses.mp4' 'models/five_horses.pth'"
+    command: "python style_video.py --frn --batch-size 1 'input/test_540x960_600frames.mp4' 'output/test_540x960_600frames_5_horses3fsr.mp4' 'models/5_horses#alpha1.0E+02#beta1.0E+05#gamma1.0E-05#lf1.0E+05#lo2.0E+05#ep1#lr1.0E-03#frnTrue.pth'"
+    # command: "python train.py --data-dir '/mnt/datasets' --output-file './models/orient.pth' styles/orient.jpg"
+    # command: "python train_schedule.py --list 0"
+    shm_size: '12gb'
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+
+  style_transfer2:
+    container_name: philipp_gpu1_reconet3b
+    image: utileetdulce/reconet:empty-samurai
+    build: .
+    volumes:
+      - .:/root/workspace
+      - /mnt/big/dataset/flyingthings3d_monkaa/:/mnt/datasets
+    runtime: nvidia  
+    # command: "python train.py --data-dir '/mnt/datasets' --output-file './blue_horses.pth' styles/blue_horses.jpg"
+    command: "python train_schedule.py --list 1"
+    shm_size: '12gb'
+    environment:
+      - CUDA_VISIBLE_DEVICES=1
+
+  tensorboard:
+    container_name: philipp_noGpu_tensorboard
+    image: tensorflow/tensorflow
+    volumes:
+      - ./runs:/opt/summaries
+    command: "tensorboard --logdir /opt/summaries --host 0.0.0.0"
+    ports:
+      - 8080:8080
+      - 6006:6006

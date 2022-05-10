@@ -1,3 +1,4 @@
+import datetime
 import os
 import argparse
 
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("output", help="Path to output video file")
     parser.add_argument("model", help="Path to model file")
     parser.add_argument("--use-cpu", action='store_true', help="Use CPU instead of GPU")
-    parser.add_argument("--gpu-device", type=int, default=None, help="GPU device index")
+    parser.add_argument("--gpu-device", type=int, default=0, help="GPU device index")
     parser.add_argument("--batch-size", type=int, default=2, help="Batch size")
     parser.add_argument("--fps", type=int, default=None, help="FPS of output video")
     parser.add_argument("--frn", action='store_true', help="Use Filter Response Normalization and TLU ")
@@ -34,12 +35,15 @@ if __name__ == "__main__":
 
     create_folder_for_file(args.output)
     writer = VideoWriter(args.output, reader.width, reader.height, reader.fps)
+    counter = 0
 
     with writer:
         batch = []
 
+        start_time = datetime.datetime.now()
         for frame in reader:
             batch.append(frame)
+            counter = counter + 1
 
             if len(batch) == batch_size:
                 batch = np.array(batch)
@@ -52,3 +56,7 @@ if __name__ == "__main__":
             batch = np.array(batch)
             for styled_frame in model.run(batch):
                 writer.write(styled_frame)
+
+        end_time = datetime.datetime.now()
+        delta_time_in_s = (end_time - start_time).total_seconds()
+        print('frames:', counter,'took:', delta_time_in_s, 'seconds, fps:', counter/delta_time_in_s)
